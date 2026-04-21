@@ -96,3 +96,39 @@ def get_last_check(url_id):
                 (url_id,)
             )
             return cur.fetchone()
+
+def add_url_check(url_id, status_code=None, h1=None, title=None, description=None):
+    with get_db_connection() as conn:
+        with conn.cursor(cursor_factory=DictCursor) as cur:
+            cur.execute(
+                """INSERT INTO url_checks 
+                   (url_id, status_code, h1, title, description, created_at) 
+                   VALUES (%s, %s, %s, %s, %s, %s) RETURNING id""",
+                (url_id, status_code, h1, title, description, datetime.now())
+            )
+            check_id = cur.fetchone()['id']
+            conn.commit()
+            return check_id
+
+
+def get_url_checks(url_id):
+    with get_db_connection() as conn:
+        with conn.cursor(cursor_factory=DictCursor) as cur:
+            cur.execute(
+                "SELECT * FROM url_checks WHERE url_id = %s ORDER BY created_at DESC",
+                (url_id,)
+            )
+            return cur.fetchall()
+
+
+def get_last_check(url_id):
+    with get_db_connection() as conn:
+        with conn.cursor(cursor_factory=DictCursor) as cur:
+            cur.execute(
+                """SELECT * FROM url_checks 
+                   WHERE url_id = %s 
+                   ORDER BY created_at DESC 
+                   LIMIT 1""",
+                (url_id,)
+            )
+            return cur.fetchone()

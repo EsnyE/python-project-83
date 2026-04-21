@@ -63,3 +63,18 @@ def show_url(id):
     checks = db.get_url_checks(id)
     
     return render_template('url_detail.html', url=url_data, checks=checks)
+@app.route('/urls/<int:id>/checks', methods=['POST'])
+def check_url(id):
+    url_data = db.get_url_by_id(id)
+    
+    if not url_data:
+        flash('Страница не найдена', 'danger')
+        return redirect(url_for('list_urls')), 404
+    
+    try:
+        check_id = db.add_url_check(url_id=id)
+        flash('Страница успешно проверена', 'success')
+    except Exception as e:
+        flash('Произошла ошибка при проверке', 'danger')
+    
+    return redirect(url_for('show_url', id=id))
