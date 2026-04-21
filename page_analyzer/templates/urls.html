@@ -1,11 +1,55 @@
 {% extends 'layout.html' %}
 
-{% block title %}Сайты на проверке{% endblock %}
+{% block title %}Список сайтов{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-    <h1>Сайты на проверке</h1>
-    <p class="text-muted">Список будет доступен после подключения базы данных</p>
-    <a href="{{ url_for('index') }}" class="btn btn-primary">← Назад</a>
+    <h1 class="mb-4">Сайты</h1>
+    
+    {% if urls %}
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered" data-test="urls">
+                <thead class="table-dark">
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">Имя</th>
+                        <th scope="col">Последняя проверка</th>
+                        <th scope="col">Код ответа</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for url in urls %}
+                        <tr>
+                            <td>{{ url.id }}</td>
+                            <td>
+                                <a href="{{ url_for('show_url', id=url.id) }}">
+                                    {{ url.name }}
+                                </a>
+                            </td>
+                            <td>
+                                {% if url.last_check %}
+                                    {{ url.last_check.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if url.status_code %}
+                                    {{ url.status_code }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            Пока нет добавленных сайтов.
+            <a href="{{ url_for('index') }}" class="alert-link">Добавить первый сайт</a>
+        </div>
+    {% endif %}
 </div>
 {% endblock %}
