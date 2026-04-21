@@ -1,21 +1,8 @@
 #!/usr/bin/env bash
-set -e
 
-echo "Installing uv package manager..."
 curl -LsSf https://astral.sh/uv/install.sh | sh
 source $HOME/.local/bin/env
-
-echo "Installing project dependencies..."
-make install
-
-echo "Waiting for database to be ready..."
-
-if [ -z "$DATABASE_URL" ]; then
-    echo "ERROR: DATABASE_URL is not set"
-    exit 1
-fi
-
-echo "Running database migrations..."
-PGCONNECT_TIMEOUT=10 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database.sql
-
-echo "Build completed successfully!"
+# Postgres позволяет подключиться к удаленной базе указав ссылку на нее после флага -d
+# ссылка подгрузится из переменной окружения, которую нам нужно будет указать на сервисе деплоя
+# дальше мы загружаем в поключенную базу наш sql-файл с таблицами
+make install && psql -a -d $DATABASE_URL -f database.sql
