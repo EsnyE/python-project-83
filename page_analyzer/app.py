@@ -43,13 +43,20 @@ def add_url():
 def list_urls():
     urls = db.get_all_urls()
 
+    enhanced_urls = []
     for url in urls:
+        enhanced_url = {
+            'id': url['id'],
+            'name': url['name'],
+            'created_at': url['created_at']
+        }
         last_check = db.get_last_check(url['id'])
         if last_check:
-            url['last_check'] = last_check
-            url['status_code'] = last_check['status_code']
+            enhanced_url['last_check_date'] = last_check['created_at']
+            enhanced_url['status_code'] = last_check['status_code']
+        enhanced_urls.append(enhanced_url)
     
-    return render_template('urls.html', urls=urls)
+    return render_template('urls.html', urls=enhanced_urls)
 
 
 @app.route('/urls/<int:id>')
