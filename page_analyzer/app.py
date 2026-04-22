@@ -1,12 +1,20 @@
 import os
+import requests
 from flask import Flask, render_template, request, flash, redirect, url_for
 from dotenv import load_dotenv
 from page_analyzer import db
+import validators
+from urllib.parse import urlparse
 
 load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key')
+
+
+def normalize_url(url):
+    parsed = urlparse(url)
+    return f"{parsed.scheme}://{parsed.netloc}".lower()
 
 
 @app.route('/')
@@ -18,14 +26,21 @@ def index():
 def add_url():
     url = request.form.get('url', '').strip()
     
-    is_valid, error_message = db.validate_url(url)
-    if not is_valid:
-        flash(error_message, 'danger')
+    if not url:
+        flash('URL обязателен', 'danger')
         return render_template('index.html', url=url), 422
     
-    normalized_url = db.normalize_url(url)
-    existing_url = db.get_url_by_name(normalized_url)
+    if len(url) > 255:
+        flash('URL превышает 255 символов', 'danger')
+        return render_template('index.html', url=url), 422
     
+    if not validators.url(url):
+        flash('Некорректный URL', 'danger')
+        return render_template('index.html', url=url), 422
+    
+    normalized_url = normalize_url(url)
+    
+    existing_url = db.get_url_by_name(normalized_url)
     if existing_url:
         flash('Страница уже существует', 'info')
         return redirect(url_for('show_url', id=existing_url['id']))
@@ -34,29 +49,51 @@ def add_url():
         url_id = db.add_url(normalized_url)
         flash('Страница успешно добавлена', 'success')
         return redirect(url_for('show_url', id=url_id))
-    except Exception as e:
+    except Exception:
         flash('Произошла ошибка при добавлении', 'danger')
         return render_template('index.html', url=url), 500
+
+
+@app.route('/urls/<int:id>/checks', methods=['POST'])
+def check_url(id):
+    """Запускает проверку URL."""
+    url_data = db.get_url_by_id(id)
+    
+    if not url_data:
+        flash('Страница не найдена', 'danger')
+        return redirect(url_for('list_urls')), 404
+    
+    try:
+        response = requests.get(
+            url_data['name'],
+            timeout=10,
+            headers={'User-Agent': 'Mozilla/5.0 (compatible; PageAnalyzer/1.0)'}
+        )
+        response.raise_for_status()
+        
+        db.add_url_check(url_id=id, status_code=response.status_code)
+        flash('Страница успешно проверена', 'success')
+        
+    except requests.exceptions.RequestException:
+        flash('Произошла ошибка при проверке', 'danger')
+    
+    return redirect(url_for('show_url', id=id))
 
 
 @app.route('/urls')
 def list_urls():
     urls = db.get_all_urls()
-
-    enhanced_urls = []
-    for url in urls:
-        enhanced_url = {
-            'id': url['id'],
-            'name': url['name'],
-            'created_at': url['created_at']
-        }
-        last_check = db.get_last_check(url['id'])
-        if last_check:
-            enhanced_url['last_check_date'] = last_check['created_at']
-            enhanced_url['status_code'] = last_check['status_code']
-        enhanced_urls.append(enhanced_url)
     
-    return render_template('urls.html', urls=enhanced_urls)
+    result_urls = []
+    for url in urls:
+        url_dict = dict(url)
+        last_check = db.get_last_check(url_dict['id'])
+        if last_check:
+            url_dict['last_check_date'] = last_check['created_at']
+            url_dict['status_code'] = last_check['status_code']
+        result_urls.append(url_dict)
+    
+    return render_template('urls.html', urls=result_urls)
 
 
 @app.route('/urls/<int:id>')
@@ -70,18 +107,3 @@ def show_url(id):
     checks = db.get_url_checks(id)
     
     return render_template('url_detail.html', url=url_data, checks=checks)
-@app.route('/urls/<int:id>/checks', methods=['POST'])
-def check_url(id):
-    url_data = db.get_url_by_id(id)
-    
-    if not url_data:
-        flash('Страница не найдена', 'danger')
-        return redirect(url_for('list_urls')), 404
-    
-    try:
-        check_id = db.add_url_check(url_id=id)
-        flash('Страница успешно проверена', 'success')
-    except Exception as e:
-        flash('Произошла ошибка при проверке', 'danger')
-    
-    return redirect(url_for('show_url', id=id))

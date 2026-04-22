@@ -63,16 +63,17 @@ def get_all_urls():
             return cur.fetchall()
 
 
-def add_url_check(url_id, status_code, h1, title, description):
+def add_url_check(url_id, status_code=None):
     with get_db_connection() as conn:
         with conn.cursor(cursor_factory=DictCursor) as cur:
             cur.execute(
-                """INSERT INTO url_checks 
-                   (url_id, status_code, h1, title, description, created_at) 
-                   VALUES (%s, %s, %s, %s, %s, %s)""",
-                (url_id, status_code, h1, title, description, datetime.now())
+                """INSERT INTO url_checks (url_id, status_code, created_at) 
+                   VALUES (%s, %s, %s) RETURNING id""",
+                (url_id, status_code, datetime.now())
             )
+            check_id = cur.fetchone()['id']
             conn.commit()
+            return check_id
 
 
 def get_url_checks(url_id):
