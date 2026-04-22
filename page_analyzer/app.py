@@ -18,8 +18,12 @@ def normalize_url(url):
     return f"{parsed.scheme}://{parsed.netloc}".lower()
 
 
-def parse_seo_data(html):
-    soup = BeautifulSoup(html, 'html.parser')
+def parse_seo_data(response):
+    if response.apparent_encoding:
+        response.encoding = response.apparent_encoding
+    
+    soup = BeautifulSoup(response.text, 'html.parser')
+
     h1_tag = soup.find('h1')
     h1 = h1_tag.text.strip() if h1_tag else ''
     title_tag = soup.find('title')
