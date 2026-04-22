@@ -42,7 +42,6 @@ jobs:
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
         with:
-          projectBaseDir: .
           args: >
             -Dsonar.organization=esnye
             -Dsonar.projectKey=EsnyE_python-project-83
