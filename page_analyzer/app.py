@@ -23,7 +23,6 @@ def parse_seo_data(response):
         response.encoding = response.apparent_encoding
     
     soup = BeautifulSoup(response.text, 'html.parser')
-
     h1_tag = soup.find('h1')
     h1 = h1_tag.text.strip() if h1_tag else ''
     title_tag = soup.find('title')
@@ -86,7 +85,8 @@ def check_url(id):
             headers={'User-Agent': 'Mozilla/5.0 (compatible; PageAnalyzer/1.0)'}
         )
         response.raise_for_status()
-        h1, title, description = parse_seo_data(response.text)
+        h1, title, description = parse_seo_data(response)
+
         db.add_url_check(
             url_id=id,
             status_code=response.status_code,
