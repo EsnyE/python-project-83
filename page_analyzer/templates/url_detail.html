@@ -32,42 +32,32 @@
     </form>
     
     {% if checks %}
-        <div class="table-responsive">
-            <table class="table table-hover table-bordered" data-test="checks">
-                <thead class="table-dark">
+    <div class="table-responsive">
+        <table class="table table-hover table-bordered" data-test="checks">
+            <thead class="table-dark">
+                <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Код ответа</th>
+                    <th scope="col">h1</th>
+                    <th scope="col">title</th>
+                    <th scope="col">description</th>
+                    <th scope="col">Дата создания</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for check in checks %}
                     <tr>
-                        <th scope="col">ID</th>
-                        <th scope="col">Код ответа</th>
-                        <th scope="col">h1</th>
-                        <th scope="col">title</th>
-                        <th scope="col">description</th>
-                        <th scope="col">Дата создания</th>
+                        <td>{{ check.id }}</td>
+                        <td>{{ check.status_code or '' }}</td>
+                        <td>{{ check.h1|truncate }}</td>
+                        <td>{{ check.title|truncate }}</td>
+                        <td>{{ check.description|truncate }}</td>
+                        <td>{{ check.created_at.strftime('%Y-%m-%d') }}</td>
                     </tr>
-                </thead>
-                <tbody>
-                    {% for check in checks %}
-                        <tr>
-                            <td>{{ check.id }}</td>
-                            <td>{{ check.status_code or '' }}</td>
-                            <td>{{ check.h1 or '' }}</td>
-                            <td>{{ check.title or '' }}</td>
-                            <td>{{ check.description or '' }}</td>
-                            <td>{{ check.created_at.strftime('%Y-%m-%d') }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    {% else %}
-        <div class="alert alert-secondary">
-            Проверки еще не выполнялись.
-        </div>
-    {% endif %}
-    
-    <div class="mt-3">
-        <a href="{{ url_for('list_urls') }}" class="btn btn-secondary">
-            ← Назад к списку
-        </a>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-</div>
-{% endblock %}
+{% else %}
+    <p class="text-muted">Проверки еще не выполнялись.</p>
+{% endif %}
