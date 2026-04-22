@@ -19,18 +19,27 @@ def normalize_url(url):
 
 
 def parse_seo_data(response):
-    if response.apparent_encoding:
-        response.encoding = response.apparent_encoding
+    try:
+        if response.apparent_encoding:
+            response.encoding = response.apparent_encoding
+    except Exception:
+        pass
     
-    soup = BeautifulSoup(response.text, 'html.parser')
-    h1_tag = soup.find('h1')
-    h1 = h1_tag.text.strip() if h1_tag else ''
-    title_tag = soup.find('title')
-    title = title_tag.text.strip() if title_tag else ''
-    desc_tag = soup.find('meta', attrs={'name': 'description'})
-    description = desc_tag.get('content', '').strip() if desc_tag else ''
-    
-    return h1, title, description
+    try:
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        h1_tag = soup.find('h1')
+        h1 = h1_tag.text.strip() if h1_tag else ''
+        
+        title_tag = soup.find('title')
+        title = title_tag.text.strip() if title_tag else ''
+        
+        desc_tag = soup.find('meta', attrs={'name': 'description'})
+        description = desc_tag.get('content', '').strip() if desc_tag else ''
+        
+        return h1, title, description
+    except Exception:
+        return '', '', ''
 
 
 @app.route('/')
@@ -136,10 +145,12 @@ def inject_now():
     from datetime import datetime
     return {'now': datetime.now()}
 
+
 @app.template_filter('truncate')
 def truncate_filter(s, length=200):
-    if not s:
+    if s is None:
         return ''
+    s = str(s)
     if len(s) <= length:
         return s
     return s[:length] + '...'
