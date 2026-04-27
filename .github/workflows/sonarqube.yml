@@ -46,7 +46,6 @@ jobs:
             -Dsonar.projectKey=EsnyE_python-project-83
             -Dsonar.organization=esnye
             -Dsonar.sources=page_analyzer
-            -Dsonar.tests=tests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
