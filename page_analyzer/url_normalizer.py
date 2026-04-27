@@ -4,18 +4,17 @@ import validators
 
 def normalize(url):
     parsed = urlparse(url)
-    normalized = f"{parsed.scheme}://{parsed.netloc}".lower()
-    return normalized.rstrip('/')
+    return f"{parsed.scheme}://{parsed.netloc}".lower()
 
 
 def validate(url):
-
     if not url:
-        return False,
+        return False, "URL обязателен"
     
     if len(url) > 255:
-        return False,
+        return False, "URL превышает 255 символов"
+    
     if not validators.url(url):
-        return False,
+        return False, "Некорректный URL"
     
     return True, None
